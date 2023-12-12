@@ -13,3 +13,15 @@ I think this can be solved by nextcloud command line client and some scripting.
 But I need a project to learn programming in rust, so I choosed to implement this a daemon.
 
 Currently the coding is not done, and the code does nothing.
+
+## Installation requirements
+
+Install rust following https://www.rust-lang.org/tools/install
+
+## Run the app
+
+You can compile and run the app by calling
+
+```
+cargo run
+```
