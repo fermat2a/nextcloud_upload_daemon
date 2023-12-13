@@ -23,5 +23,5 @@ Install rust following https://www.rust-lang.org/tools/install
 You can compile and run the app by calling
 
 ```
-cargo run
+RUST_LOG=trace cargo run
 ```
