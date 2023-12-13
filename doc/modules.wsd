@@ -1,0 +1,5 @@
+@startuml modules
+FileWatcher --> FileController: WriteNotification(Filename)
+FileController --> FileHandler: WriteNotification(timestamp)
+FileHandler --> FileController: UploadNotification(Filename, timestamp)
+@enduml
