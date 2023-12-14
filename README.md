@@ -22,6 +22,11 @@ Install rust following https://www.rust-lang.org/tools/install
 
 You can compile and run the app by calling
 
-```
+```bash
 RUST_LOG=trace cargo run
 ```
+
+## Ressources
+
+* https://github.com/grassedge/generate-plantuml-action for creating svg images from the plantuml files
+* https://github.com/BamPeers/rust-ci-github-actions-workflow/blob/main/.github/workflows/check-and-lint.yaml for CI Integration of rust code
