@@ -4,9 +4,10 @@ use serde_yaml::{self};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Configuration {
-    address: String,
-    username: String,
-    password: String,
+    pub address: String,
+    pub username: String,
+    pub password: String,
+    pub local_path: String,
 }
 
 pub fn load_configuration(filepath: &str) -> Result<Configuration, Box<dyn std::error::Error>> {
@@ -34,6 +35,7 @@ mod tests {
         );
         assert_eq!(scrape_config.username, "IhrBenutzername");
         assert_eq!(scrape_config.password, "IhrPasswort");
+        assert_eq!(scrape_config.local_path, "/tmp/test_nextcloud_upload_daemon");
     }
 
     #[test]
