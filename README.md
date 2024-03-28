@@ -18,6 +18,14 @@ Currently the coding is not done, and the code does nothing.
 
 Install rust following https://www.rust-lang.org/tools/install
 
+## Run Unit tests
+
+There are some unit tests that you can run by calling
+
+```bash
+RUST_LOG=trace cargo test
+```
+
 ## Run the app
 
 You can compile and run the app by calling
