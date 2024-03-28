@@ -35,7 +35,10 @@ mod tests {
         );
         assert_eq!(scrape_config.username, "IhrBenutzername");
         assert_eq!(scrape_config.password, "IhrPasswort");
-        assert_eq!(scrape_config.local_path, "/tmp/test_nextcloud_upload_daemon");
+        assert_eq!(
+            scrape_config.local_path,
+            "/tmp/test_nextcloud_upload_daemon"
+        );
     }
 
     #[test]

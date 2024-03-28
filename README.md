@@ -18,6 +18,14 @@ Currently the coding is not done, and the code does nothing.
 
 Install rust following https://www.rust-lang.org/tools/install
 
+## Coding Rules
+
+To format your code in the right way just run following before commiting:
+
+```bash
+cargo fmt
+```
+
 ## Run Unit tests
 
 There are some unit tests that you can run by calling
