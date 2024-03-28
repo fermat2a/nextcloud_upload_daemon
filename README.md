@@ -16,7 +16,7 @@ Currently the coding is not done, and the code does nothing.
 
 ## Installation requirements
 
-Install rust following https://www.rust-lang.org/tools/install
+Install rust following <https://www.rust-lang.org/tools/install>
 
 ## Coding Rules
 
@@ -44,5 +44,5 @@ RUST_LOG=trace cargo run
 
 ## Ressources
 
-* https://github.com/grassedge/generate-plantuml-action for creating svg images from the plantuml files
-* https://github.com/BamPeers/rust-ci-github-actions-workflow/blob/main/.github/workflows/check-and-lint.yaml for CI Integration of rust code
+* <https://github.com/grassedge/generate-plantuml-action> for creating svg images from the plantuml files
+* <https://github.com/BamPeers/rust-ci-github-actions-workflow/blob/main/.github/workflows/check-and-lint.yaml> for CI Integration of rust code
