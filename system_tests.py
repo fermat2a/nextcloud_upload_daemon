@@ -33,9 +33,6 @@ class NextcloudSystemTests(unittest.TestCase):
         # Wait for Nextcloud to be ready
         cls._wait_for_nextcloud()
 
-        # Create test user
-        cls._create_test_user()
-
         # Setup test directories
         cls.temp_dir = tempfile.mkdtemp()
         cls.upload_dir = Path(cls.temp_dir) / "upload"
@@ -95,12 +92,12 @@ class NextcloudSystemTests(unittest.TestCase):
         self.test_upload_dir = self.upload_dir / self.test_name
         self.test_upload_dir.mkdir()
 
-        # Create test configuration
+        # Create test configuration - use admin credentials to avoid rate limiting
         self.config_file = self.test_upload_dir / "config.json"
         self.config_data = {
             "nextcloud_server": self.nextcloud_url,
-            "username": self.test_user,
-            "password": self.test_password,
+            "username": self.admin_user,
+            "password": self.admin_password,
             "directories": [{"local": str(self.test_upload_dir), "remote": f"/test_{self.test_name}"}],
             "upload_delay_seconds": 1,
             "delete_delay_seconds": 3,
@@ -136,8 +133,8 @@ class NextcloudSystemTests(unittest.TestCase):
         """Clean up test files from Nextcloud"""
         try:
             # Delete test directory from Nextcloud
-            webdav_url = f"{self.nextcloud_url}/remote.php/dav/files/{self.test_user}/test_{self.test_name}"
-            requests.delete(webdav_url, auth=(self.test_user, self.test_password), timeout=10)
+            webdav_url = f"{self.nextcloud_url}/remote.php/dav/files/{self.admin_user}/test_{self.test_name}"
+            requests.delete(webdav_url, auth=(self.admin_user, self.admin_password), timeout=10)
         except Exception as e:
             print(f"Warning: Could not clean up Nextcloud files: {e}")
 
@@ -146,28 +143,33 @@ class NextcloudSystemTests(unittest.TestCase):
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
 
         # Run daemon in background
-        process = subprocess.Popen(
-            ["python3", str(daemon_script), "--config", str(self.config_file)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+        with subprocess.Popen(
+            ["python3", str(daemon_script), "--config", str(self.config_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        ) as process:
+            # Let it run for the specified time
+            time.sleep(timeout)
 
-        # Let it run for the specified time
-        time.sleep(timeout)
+            # Stop the daemon gracefully
+            process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                # Force kill if still running
+                process.kill()
+                stdout, stderr = process.communicate(timeout=2)
 
-        # Stop the daemon
-        process.terminate()
-        time.sleep(2)  # Give it time to clean up
+            # Print daemon output for debugging if there are errors
+            if stderr or process.returncode != 0:
+                print(f"Daemon returncode: {process.returncode}")
+                if stdout:
+                    print(f"Daemon stdout: {stdout}")
+                if stderr:
+                    print(f"Daemon stderr: {stderr}")
 
-        # Force kill if still running
-        try:
-            process.kill()
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            pass
-
-        if process.poll() is None:
-            process.kill()
-
-        return process.returncode
+            return process.returncode
 
     def _create_test_file(self, filename, content="Test file content"):
         """Create a test file in the upload directory"""
@@ -178,17 +180,17 @@ class NextcloudSystemTests(unittest.TestCase):
 
     def _check_file_in_nextcloud(self, filename):
         """Check if file exists in Nextcloud"""
-        webdav_url = f"{self.nextcloud_url}/remote.php/dav/files/{self.test_user}/test_{self.test_name}/{filename}"
+        webdav_url = f"{self.nextcloud_url}/remote.php/dav/files/{self.admin_user}/test_{self.test_name}/{filename}"
 
-        response = requests.request("PROPFIND", webdav_url, auth=(self.test_user, self.test_password), timeout=10)
+        response = requests.request("PROPFIND", webdav_url, auth=(self.admin_user, self.admin_password), timeout=10)
 
         return response.status_code == 207
 
     def _get_file_content_from_nextcloud(self, filename):
         """Get file content from Nextcloud"""
-        webdav_url = f"{self.nextcloud_url}/remote.php/dav/files/{self.test_user}/test_{self.test_name}/{filename}"
+        webdav_url = f"{self.nextcloud_url}/remote.php/dav/files/{self.admin_user}/test_{self.test_name}/{filename}"
 
-        response = requests.get(webdav_url, auth=(self.test_user, self.test_password), timeout=10)
+        response = requests.get(webdav_url, auth=(self.admin_user, self.admin_password), timeout=10)
 
         if response.status_code == 200:
             return response.text
@@ -341,7 +343,7 @@ class NextcloudSystemTests(unittest.TestCase):
         from nextcloud_upload_daemon import NextcloudUploader
 
         # Test valid credentials
-        uploader = NextcloudUploader(self.nextcloud_url, self.test_user, self.test_password)
+        uploader = NextcloudUploader(self.nextcloud_url, self.admin_user, self.admin_password)
 
         self.assertTrue(uploader.test_connection(), "Should connect with valid credentials")
 
