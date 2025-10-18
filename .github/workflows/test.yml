@@ -92,3 +92,65 @@ jobs:
     - name: Check dependencies for known security vulnerabilities
       run: |
         safety check --ignore=70612 || true
+
+  system-tests:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_PASSWORD: nextcloud
+          MYSQL_DATABASE: nextcloud
+          MYSQL_USER: nextcloud
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      nextcloud:
+        image: nextcloud:latest
+        env:
+          MYSQL_PASSWORD: nextcloud
+          MYSQL_DATABASE: nextcloud
+          MYSQL_USER: nextcloud
+          MYSQL_HOST: mysql
+          NEXTCLOUD_ADMIN_USER: admin
+          NEXTCLOUD_ADMIN_PASSWORD: admin123
+          NEXTCLOUD_TRUSTED_DOMAINS: localhost
+        ports:
+          - 8080:80
+        options: >-
+          --health-cmd="curl -f http://localhost/status.php || exit 1"
+          --health-interval=30s
+          --health-timeout=10s
+          --health-retries=10
+          --health-start-period=60s
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Wait for Nextcloud to be ready
+      run: |
+        echo "Waiting for Nextcloud to be fully ready..."
+        timeout 300 bash -c 'until curl -f http://localhost:8080/status.php; do echo "Waiting for Nextcloud..."; sleep 10; done'
+        echo "Nextcloud is ready!"
+
+    - name: Run system tests
+      env:
+        CI: true
+      run: |
+        python system_tests.py -v
