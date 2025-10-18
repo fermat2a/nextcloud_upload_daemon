@@ -57,16 +57,20 @@ class NextcloudSystemTests(unittest.TestCase):
 
         while time.time() - start_time < timeout:
             try:
-                response = requests.get(f"{cls.nextcloud_url}/status.php", timeout=5)
+                # Only check basic status, skip WebDAV to avoid rate limiting
+                response = requests.get(f"{cls.nextcloud_url}/status.php", timeout=10)
                 if response.status_code == 200:
                     status = response.json()
                     if status.get("installed") and status.get("maintenance") is False:
                         print("Nextcloud is ready!")
+                        # Wait a bit more for internal initialization
+                        time.sleep(10)
                         return
             except requests.exceptions.RequestException:
                 pass
 
-            time.sleep(5)
+            print("Still waiting for Nextcloud...")
+            time.sleep(10)
 
         raise RuntimeError(f"Nextcloud not ready after {timeout} seconds")
 
@@ -94,7 +98,7 @@ class NextcloudSystemTests(unittest.TestCase):
         # Create test configuration
         self.config_file = self.test_upload_dir / "config.json"
         self.config_data = {
-            "server_url": self.nextcloud_url,
+            "nextcloud_server": self.nextcloud_url,
             "username": self.test_user,
             "password": self.test_password,
             "directories": [{"local": str(self.test_upload_dir), "remote": f"/test_{self.test_name}"}],
@@ -137,19 +141,28 @@ class NextcloudSystemTests(unittest.TestCase):
         except Exception as e:
             print(f"Warning: Could not clean up Nextcloud files: {e}")
 
-    def _run_daemon(self, timeout=30):
+    def _run_daemon(self, timeout=15):
         """Run the daemon for a specified time"""
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
 
         # Run daemon in background
-        process = subprocess.Popen(["python3", str(daemon_script), "--config", str(self.config_file)])
+        process = subprocess.Popen(
+            ["python3", str(daemon_script), "--config", str(self.config_file)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
 
         # Let it run for the specified time
         time.sleep(timeout)
 
         # Stop the daemon
         process.terminate()
-        time.sleep(1)
+        time.sleep(2)  # Give it time to clean up
+
+        # Force kill if still running
+        try:
+            process.kill()
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
 
         if process.poll() is None:
             process.kill()
@@ -188,7 +201,7 @@ class NextcloudSystemTests(unittest.TestCase):
         file_path = self._create_test_file("test_upload.txt", test_content)
 
         # Run daemon for upload
-        self._run_daemon(timeout=10)
+        self._run_daemon(timeout=15)
 
         # Check if file was uploaded
         self.assertTrue(self._check_file_in_nextcloud("test_upload.txt"), "File should be uploaded to Nextcloud")
@@ -297,7 +310,7 @@ class NextcloudSystemTests(unittest.TestCase):
 
         # Use invalid configuration
         invalid_config = self.config_data.copy()
-        invalid_config["server_url"] = "http://invalid-server:9999"
+        invalid_config["nextcloud_server"] = "http://invalid-server:9999"
 
         invalid_config_file = self.test_upload_dir / "invalid_config.json"
         with open(invalid_config_file, "w") as f:
