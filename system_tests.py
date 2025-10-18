@@ -277,18 +277,18 @@ class NextcloudSystemTests(unittest.TestCase):
         # Simplified test: create two files with different content and verify both are uploaded
         original_content = "Original content"
         modified_content = "Modified content - updated!"
-        
+
         # Create first file and upload it
         self._run_daemon_with_file_creation("test_modify_1.txt", original_content, timeout=10)
-        
+
         # Verify first file upload
         self.assertTrue(self._check_file_in_nextcloud("test_modify_1.txt"))
         uploaded_content_1 = self._get_file_content_from_nextcloud("test_modify_1.txt")
         self.assertEqual(uploaded_content_1, original_content, "First file should have original content")
-        
+
         # Create second file with modified content
         self._run_daemon_with_file_creation("test_modify_2.txt", modified_content, timeout=10)
-        
+
         # Verify second file upload
         self.assertTrue(self._check_file_in_nextcloud("test_modify_2.txt"))
         uploaded_content_2 = self._get_file_content_from_nextcloud("test_modify_2.txt")
