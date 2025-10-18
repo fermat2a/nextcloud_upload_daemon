@@ -307,6 +307,12 @@ This software is provided "AS IS" without warranty of any kind, express or impli
 
 The author disclaims all liability for any damages, data loss, or other consequences resulting from the use of this software.
 
-## License
+## Copyright and License
 
-This project is open source. Please check the repository for license details.
+**Copyright Notice**: The copyright ownership of this code is unclear due to its AI-generated nature. Since the source code was created by GitHub Copilot, I cannot definitively claim copyright ownership of the generated code. The legal framework regarding copyright of AI-generated content is still evolving and varies by jurisdiction.
+
+**License Choice**: To the extent that I have the right to do so, I choose to make this code available under the GNU General Public License version 2 (GPL v2). The complete license text can be found in the [license.txt](license.txt) file in this repository.
+
+**Important**: Users should be aware that the copyright status of AI-generated code may be subject to legal uncertainty. If copyright ownership is a concern for your use case, you should seek appropriate legal advice.
+
+This project is open source under the GPL v2 license, subject to the copyright considerations mentioned above.
