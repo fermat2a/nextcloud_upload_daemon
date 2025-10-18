@@ -10,6 +10,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import unittest
@@ -142,9 +143,12 @@ class NextcloudSystemTests(unittest.TestCase):
         """Run the daemon for a specified time"""
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
 
+        # Use Python from virtual environment if available
+        python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
+
         # Run daemon in background
         with subprocess.Popen(
-            ["python3", str(daemon_script), "--config", str(self.config_file)],
+            [python_executable, str(daemon_script), "--config", str(self.config_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -161,13 +165,53 @@ class NextcloudSystemTests(unittest.TestCase):
                 process.kill()
                 stdout, stderr = process.communicate(timeout=2)
 
-            # Print daemon output for debugging if there are errors
-            if stderr or process.returncode != 0:
-                print(f"Daemon returncode: {process.returncode}")
-                if stdout:
-                    print(f"Daemon stdout: {stdout}")
-                if stderr:
-                    print(f"Daemon stderr: {stderr}")
+            # Print daemon output for debugging
+            print(f"Daemon returncode: {process.returncode}")
+            if stdout:
+                print(f"Daemon stdout: {stdout}")
+            if stderr:
+                print(f"Daemon stderr: {stderr}")
+
+            return process.returncode
+
+    def _run_daemon_with_file_creation(self, filename, content, timeout=15):
+        """Run daemon and create file after daemon starts to trigger watchdog events"""
+        daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
+
+        # Use Python from virtual environment if available
+        python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
+        
+        with subprocess.Popen(
+            [python_executable, str(daemon_script), "--config", str(self.config_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        ) as process:
+            # Give daemon time to start and setup file watching
+            time.sleep(3)
+
+            # Create test file AFTER daemon is running to trigger watchdog event
+            file_path = self.test_upload_dir / filename
+            with open(file_path, "w") as f:
+                f.write(content)
+
+            # Wait for upload processing (upload_delay + processing time)
+            time.sleep(timeout - 3)
+
+            # Stop daemon
+            process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate(timeout=2)
+
+            # Print daemon output for debugging
+            print(f"Daemon returncode: {process.returncode}")
+            if stdout:
+                print(f"Daemon stdout: {stdout}")
+            if stderr:
+                print(f"Daemon stderr: {stderr}")
 
             return process.returncode
 
@@ -198,12 +242,10 @@ class NextcloudSystemTests(unittest.TestCase):
 
     def test_basic_file_upload(self):
         """Test basic file upload functionality"""
-        # Create test file
         test_content = "Hello Nextcloud System Test!"
-        file_path = self._create_test_file("test_upload.txt", test_content)
 
-        # Run daemon for upload
-        self._run_daemon(timeout=15)
+        # Use modified run method that creates file after daemon starts
+        self._run_daemon_with_file_creation("test_upload.txt", test_content, timeout=15)
 
         # Check if file was uploaded
         self.assertTrue(self._check_file_in_nextcloud("test_upload.txt"), "File should be uploaded to Nextcloud")
@@ -214,23 +256,54 @@ class NextcloudSystemTests(unittest.TestCase):
 
     def test_file_modification_update(self):
         """Test that modified files are updated in Nextcloud"""
-        # Create initial file
         original_content = "Original content"
-        file_path = self._create_test_file("test_modify.txt", original_content)
-
-        # Run daemon to upload initial file
-        self._run_daemon(timeout=8)
-
-        # Verify initial upload
-        self.assertTrue(self._check_file_in_nextcloud("test_modify.txt"))
-
-        # Modify the file
         modified_content = "Modified content - updated!"
-        with open(file_path, "w") as f:
-            f.write(modified_content)
+        
+        # Start daemon first
+        daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
+        python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
+        
+        with subprocess.Popen(
+            [python_executable, str(daemon_script), "--config", str(self.config_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        ) as process:
+            # Give daemon time to start and setup file watching
+            time.sleep(3)
 
-        # Run daemon again to detect modification
-        self._run_daemon(timeout=8)
+            # Create initial file AFTER daemon is running
+            file_path = self.test_upload_dir / "test_modify.txt"
+            with open(file_path, "w") as f:
+                f.write(original_content)
+
+            # Wait for initial upload but not deletion (shorter timeout)
+            time.sleep(5)
+            
+            # Verify initial upload 
+            self.assertTrue(self._check_file_in_nextcloud("test_modify.txt"))
+
+            # Modify the file while daemon is still running
+            with open(file_path, "w") as f:
+                f.write(modified_content)
+
+            # Wait for update processing
+            time.sleep(8)
+
+            # Stop daemon
+            process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate(timeout=2)
+
+            # Print daemon output for debugging
+            print(f"Daemon returncode: {process.returncode}")
+            if stdout:
+                print(f"Daemon stdout: {stdout}")
+            if stderr:
+                print(f"Daemon stderr: {stderr}")
 
         # Verify update
         uploaded_content = self._get_file_content_from_nextcloud("test_modify.txt")
@@ -238,40 +311,32 @@ class NextcloudSystemTests(unittest.TestCase):
 
     def test_file_deletion_after_upload(self):
         """Test that files are deleted locally after successful upload"""
-        # Create test file
-        file_path = self._create_test_file("test_delete.txt", "Delete me after upload")
-
-        # Verify file exists locally
-        self.assertTrue(file_path.exists(), "File should exist before daemon runs")
-
-        # Run daemon long enough for upload and deletion
-        self._run_daemon(timeout=10)
+        # Run daemon and create file after it starts to trigger watchdog
+        self._run_daemon_with_file_creation("test_delete.txt", "Delete me after upload", timeout=15)
 
         # Check upload happened
         self.assertTrue(self._check_file_in_nextcloud("test_delete.txt"), "File should be uploaded to Nextcloud")
 
-        # Check local deletion happened
+        # Check local deletion happened 
+        file_path = self.test_upload_dir / "test_delete.txt"
         self.assertFalse(file_path.exists(), "File should be deleted locally after upload")
 
     def test_conflict_resolution(self):
         """Test filename conflict resolution"""
-        # Create file with common name
         content1 = "First file content"
-        file1_path = self._create_test_file("common_name.txt", content1)
-
-        # Run daemon to upload first file
-        self._run_daemon(timeout=8)
+        
+        # Create first file after daemon starts
+        self._run_daemon_with_file_creation("common_name.txt", content1, timeout=12)
 
         # Verify upload
         self.assertTrue(self._check_file_in_nextcloud("common_name.txt"))
 
-        # Create another file with same name (after first is deleted)
+        # Create another file with same name (after first is deleted) 
         time.sleep(1)  # Ensure different timestamp
         content2 = "Second file content with different data"
-        file2_path = self._create_test_file("common_name.txt", content2)
-
-        # Run daemon again
-        self._run_daemon(timeout=8)
+        
+        # Create second file and run daemon again
+        self._run_daemon_with_file_creation("common_name.txt", content2, timeout=12)
 
         # Check that both files exist (second should be renamed)
         self.assertTrue(self._check_file_in_nextcloud("common_name.txt"))
@@ -283,20 +348,49 @@ class NextcloudSystemTests(unittest.TestCase):
 
     def test_multiple_files_upload(self):
         """Test uploading multiple files simultaneously"""
-        # Create multiple test files
         files_data = {
             "file1.txt": "Content of file 1",
-            "file2.txt": "Content of file 2",
+            "file2.txt": "Content of file 2", 
             "file3.txt": "Content of file 3",
             "subdoc.md": "# Markdown Document\nThis is a test.",
         }
 
-        file_paths = {}
-        for filename, content in files_data.items():
-            file_paths[filename] = self._create_test_file(filename, content)
+        # Start daemon first, then create all files to trigger watchdog
+        daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
+        python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
+        
+        with subprocess.Popen(
+            [python_executable, str(daemon_script), "--config", str(self.config_file)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        ) as process:
+            # Give daemon time to start and setup file watching
+            time.sleep(3)
 
-        # Run daemon
-        self._run_daemon(timeout=15)
+            # Create all test files AFTER daemon is running
+            for filename, content in files_data.items():
+                file_path = self.test_upload_dir / filename
+                with open(file_path, "w") as f:
+                    f.write(content)
+
+            # Wait for upload processing
+            time.sleep(15)
+
+            # Stop daemon
+            process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate(timeout=2)
+
+            # Print daemon output for debugging
+            print(f"Daemon returncode: {process.returncode}")
+            if stdout:
+                print(f"Daemon stdout: {stdout}")
+            if stderr:
+                print(f"Daemon stderr: {stderr}")
 
         # Check all files were uploaded
         for filename, expected_content in files_data.items():

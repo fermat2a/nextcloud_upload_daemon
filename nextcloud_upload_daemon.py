@@ -73,6 +73,40 @@ class NextcloudUploader:
                 logging.warning(f"Error checking file existence: {e}")
                 return test_filename
 
+    def _ensure_remote_directory(self, remote_path: str):
+        """Ensure remote directory exists, create if it doesn't"""
+        try:
+            # Clean and normalize the path
+            clean_path = remote_path.strip('/')
+            if not clean_path:
+                return  # Root directory always exists
+            
+            # Check if directory exists
+            dir_url = f"{self.webdav_url}/{clean_path}"
+            response = requests.request("PROPFIND", dir_url, auth=self.auth, timeout=30)
+            
+            if response.status_code == 207:
+                # Directory exists
+                logging.debug(f"Directory {remote_path} already exists")
+                return
+            elif response.status_code == 404:
+                # Directory doesn't exist, create it
+                logging.info(f"Creating directory {remote_path}")
+                print(f"DEBUG: Creating directory {remote_path}")  # Console debug
+                
+                create_response = requests.request("MKCOL", dir_url, auth=self.auth, timeout=30)
+                if create_response.status_code in [200, 201]:
+                    logging.info(f"Successfully created directory {remote_path}")
+                    print(f"DEBUG: Successfully created directory {remote_path}")  # Console debug
+                else:
+                    logging.error(f"Failed to create directory {remote_path}: HTTP {create_response.status_code}")
+                    print(f"DEBUG: Failed to create directory {remote_path}: HTTP {create_response.status_code}")  # Console debug
+            else:
+                logging.warning(f"Unexpected response when checking directory {remote_path}: HTTP {response.status_code}")
+        except Exception as e:
+            logging.error(f"Error ensuring remote directory {remote_path}: {e}")
+            print(f"DEBUG: Error ensuring remote directory {remote_path}: {e}")  # Console debug
+
     def upload_file(self, local_file_path: str, remote_path: str) -> Optional[str]:
         """
         Upload file to Nextcloud
@@ -85,6 +119,9 @@ class NextcloudUploader:
             The final filename used on the server, or None if upload failed
         """
         try:
+            # Ensure remote directory exists
+            self._ensure_remote_directory(remote_path)
+            
             filename = os.path.basename(local_file_path)
             unique_filename = self._generate_unique_filename(remote_path, filename)
 
@@ -95,9 +132,11 @@ class NextcloudUploader:
 
             if response.status_code in [200, 201, 204]:
                 logging.info(f"Successfully uploaded {local_file_path} as {unique_filename} to {remote_path}")
+                print(f"DEBUG: Successfully uploaded {local_file_path} as {unique_filename} to {remote_path}")  # Console debug
                 return unique_filename
             else:
                 logging.error(f"Failed to upload {local_file_path}: HTTP {response.status_code}")
+                print(f"DEBUG: Failed to upload {local_file_path}: HTTP {response.status_code}")  # Console debug
                 return None
 
         except Exception as e:
