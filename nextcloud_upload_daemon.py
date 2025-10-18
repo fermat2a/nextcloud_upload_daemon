@@ -178,14 +178,18 @@ class FileWatcher(FileSystemEventHandler):
 class FileProcessor:
     """Processes file events with appropriate delays"""
     
-    def __init__(self, uploader: NextcloudUploader):
+    def __init__(self, uploader: NextcloudUploader, upload_delay_seconds: int = 10, delete_delay_seconds: int = 600):
         """
         Initialize file processor
         
         Args:
             uploader: NextcloudUploader instance
+            upload_delay_seconds: Seconds to wait before uploading after file modification
+            delete_delay_seconds: Seconds to wait before deleting after successful upload
         """
         self.uploader = uploader
+        self.upload_delay = upload_delay_seconds
+        self.delete_delay = delete_delay_seconds
         self.file_states = {}  # filepath -> {'last_modified': time, 'remote_filename': str, 'remote_path': str}
         self.lock = threading.Lock()
         
@@ -218,10 +222,10 @@ class FileProcessor:
             # Schedule upload if not already scheduled
             if not self.file_states[file_path]['upload_scheduled']:
                 self.file_states[file_path]['upload_scheduled'] = True
-                threading.Timer(10.0, self._upload_file_if_stable, [file_path]).start()
+                threading.Timer(self.upload_delay, self._upload_file_if_stable, [file_path]).start()
                 
     def _upload_file_if_stable(self, file_path: str):
-        """Upload file if it hasn't been modified in the last 10 seconds"""
+        """Upload file if it hasn't been modified in the configured upload delay"""
         with self.lock:
             if file_path not in self.file_states:
                 return
@@ -229,8 +233,8 @@ class FileProcessor:
             file_state = self.file_states[file_path]
             current_time = time.time()
             
-            # Check if file is stable (no modifications in last 10 seconds)
-            if current_time - file_state['last_modified'] >= 10.0:
+            # Check if file is stable (no modifications in the configured upload delay)
+            if current_time - file_state['last_modified'] >= self.upload_delay:
                 if os.path.exists(file_path):
                     remote_path = file_state['remote_path']
                     
@@ -239,21 +243,23 @@ class FileProcessor:
                         remote_filename = self.uploader.upload_file(file_path, remote_path)
                         if remote_filename:
                             file_state['remote_filename'] = remote_filename
+                            # Schedule deletion after configured delay
+                            threading.Timer(self.delete_delay, self._delete_file_if_stable, [file_path]).start()
                             # Schedule deletion after 10 minutes
                             threading.Timer(600.0, self._delete_file_if_stable, [file_path]).start()
                     else:
                         # Update existing file
                         self.uploader.update_file(file_path, remote_path, file_state['remote_filename'])
                         # Reset deletion timer
-                        threading.Timer(600.0, self._delete_file_if_stable, [file_path]).start()
+                        threading.Timer(self.delete_delay, self._delete_file_if_stable, [file_path]).start()
                 
                 file_state['upload_scheduled'] = False
             else:
                 # File was modified, reschedule upload
-                threading.Timer(10.0, self._upload_file_if_stable, [file_path]).start()
+                threading.Timer(self.upload_delay, self._upload_file_if_stable, [file_path]).start()
     
     def _delete_file_if_stable(self, file_path: str):
-        """Delete local file if it hasn't been modified in the last 10 minutes and was uploaded successfully"""
+        """Delete local file if it hasn't been modified in the configured delete delay and was uploaded successfully"""
         with self.lock:
             if file_path not in self.file_states:
                 return
@@ -261,8 +267,8 @@ class FileProcessor:
             file_state = self.file_states[file_path]
             current_time = time.time()
             
-            # Check if file is stable for 10 minutes and was uploaded
-            if (current_time - file_state['last_modified'] >= 600.0 and 
+            # Check if file is stable for the configured delete delay and was uploaded
+            if (current_time - file_state['last_modified'] >= self.delete_delay and 
                 file_state['remote_filename'] is not None and
                 os.path.exists(file_path)):
                 
@@ -274,7 +280,7 @@ class FileProcessor:
                     logging.error(f"Failed to delete local file {file_path}: {e}")
             elif file_state['remote_filename'] is not None:
                 # Reschedule deletion if file was uploaded but still being modified
-                threading.Timer(600.0, self._delete_file_if_stable, [file_path]).start()
+                threading.Timer(self.delete_delay, self._delete_file_if_stable, [file_path]).start()
 
 
 def load_config(config_path: str) -> Dict:
@@ -306,6 +312,15 @@ def load_config(config_path: str) -> Dict:
                 logging.error(f"Missing required field in config: {field}")
                 print(f"Error: Missing required field in config: {field}", file=sys.stderr)
                 sys.exit(1)
+        
+        # Set default values for optional timing fields
+        if 'upload_delay_seconds' not in config:
+            config['upload_delay_seconds'] = 10
+            logging.info("Using default upload delay: 10 seconds")
+        
+        if 'delete_delay_seconds' not in config:
+            config['delete_delay_seconds'] = 600
+            logging.info("Using default delete delay: 600 seconds (10 minutes)")
         
         # Validate directories format
         if not isinstance(config['directories'], list):
@@ -379,8 +394,15 @@ def main():
     
     logging.info("Successfully connected to Nextcloud server")
     
-    # Initialize file processor
-    file_processor = FileProcessor(uploader)
+    # Initialize file processor with configured delays
+    file_processor = FileProcessor(
+        uploader,
+        config['upload_delay_seconds'],
+        config['delete_delay_seconds']
+    )
+    
+    logging.info(f"Using upload delay: {config['upload_delay_seconds']} seconds")
+    logging.info(f"Using delete delay: {config['delete_delay_seconds']} seconds")
     
     # Setup file watchers
     observers = []

@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+*.pyc
+__pycache__/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Test files
+test_config.json

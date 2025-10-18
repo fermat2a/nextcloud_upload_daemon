@@ -47,6 +47,8 @@ The daemon requires a JSON configuration file with the following structure:
   "nextcloud_server": "https://your-nextcloud-server.com",
   "username": "your-username",
   "password": "your-app-password-or-password",
+  "upload_delay_seconds": 10,
+  "delete_delay_seconds": 600,
   "directories": [
     {
       "local": "/home/user/documents/sync",
@@ -65,6 +67,8 @@ The daemon requires a JSON configuration file with the following structure:
 - **nextcloud_server**: The URL of your Nextcloud server (including https://)
 - **username**: Your Nextcloud username
 - **password**: Your Nextcloud password or app password (app passwords are recommended for security)
+- **upload_delay_seconds**: *(Optional)* Number of seconds to wait after file modification before uploading (default: 10)
+- **delete_delay_seconds**: *(Optional)* Number of seconds to wait after successful upload before deleting local file (default: 600, which is 10 minutes)
 - **directories**: An array of directory mappings, each containing:
   - **local**: Absolute path to the local directory to monitor
   - **remote**: Path on the Nextcloud server where files should be uploaded (relative to the user's root)

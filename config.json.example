@@ -2,6 +2,8 @@
   "nextcloud_server": "https://your-nextcloud-server.com",
   "username": "your-username",
   "password": "your-app-password-or-password",
+  "upload_delay_seconds": 10,
+  "delete_delay_seconds": 600,
   "directories": [
     {
       "local": "/home/user/documents/sync",
