@@ -18,13 +18,16 @@ services:
   nextcloud:
     image: nextcloud:latest
     restart: always
+    entrypoint: ["/docker-entrypoint-custom.sh"]
+    command: ["apache2-foreground"]
     ports:
       - "8080:80"
     links:
       - nextcloud-db
     volumes:
       - nextcloud_data:/var/www/html
-      - ./nextcloud-config.php:/var/www/html/config/zzz-custom.config.php:ro
+      - ./nextcloud-config.php:/tmp/custom-config.php:ro
+      - ./docker-entrypoint-custom.sh:/docker-entrypoint-custom.sh:ro
     environment:
       MYSQL_PASSWORD: nextcloud
       MYSQL_DATABASE: nextcloud
