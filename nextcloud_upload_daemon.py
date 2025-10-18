@@ -379,19 +379,25 @@ def load_config(config_path: str) -> Dict:
 
 
 def setup_logging():
-    """Setup logging to syslog"""
+    """Setup logging to syslog or stdout based on environment variable"""
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    # Create syslog handler
-    syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
+    # Check environment variable to determine logging destination
+    log_to_stdout = os.environ.get("NEXTCLOUD_DAEMON_LOG_STDOUT", "").lower() in ("1", "true", "yes")
 
-    # Create formatter
-    formatter = logging.Formatter("nextcloud_upload_daemon[%(process)d]: %(levelname)s - %(message)s")
-    syslog_handler.setFormatter(formatter)
-
-    # Add handler to logger
-    logger.addHandler(syslog_handler)
+    if log_to_stdout:
+        # Create console handler for stdout
+        console_handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter("%(asctime)s - nextcloud_upload_daemon[%(process)d]: %(levelname)s - %(message)s")
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+    else:
+        # Create syslog handler (default)
+        syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
+        formatter = logging.Formatter("nextcloud_upload_daemon[%(process)d]: %(levelname)s - %(message)s")
+        syslog_handler.setFormatter(formatter)
+        logger.addHandler(syslog_handler)
 
 
 def main():

@@ -146,12 +146,17 @@ class NextcloudSystemTests(unittest.TestCase):
         # Use Python from virtual environment if available
         python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
 
+        # Set environment variable to enable stdout logging for tests
+        env = os.environ.copy()
+        env["NEXTCLOUD_DAEMON_LOG_STDOUT"] = "1"
+
         # Run daemon in background
         with subprocess.Popen(
             [python_executable, str(daemon_script), "--config", str(self.config_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env=env,
         ) as process:
             # Let it run for the specified time
             time.sleep(timeout)
@@ -181,11 +186,16 @@ class NextcloudSystemTests(unittest.TestCase):
         # Use Python from virtual environment if available
         python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
         
+        # Set environment variable to enable stdout logging for tests
+        env = os.environ.copy()
+        env["NEXTCLOUD_DAEMON_LOG_STDOUT"] = "1"
+        
         with subprocess.Popen(
             [python_executable, str(daemon_script), "--config", str(self.config_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env=env,
         ) as process:
             # Give daemon time to start and setup file watching
             time.sleep(3)
@@ -263,11 +273,16 @@ class NextcloudSystemTests(unittest.TestCase):
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
         python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
         
+        # Set environment variable to enable stdout logging for tests
+        env = os.environ.copy()
+        env["NEXTCLOUD_DAEMON_LOG_STDOUT"] = "1"
+        
         with subprocess.Popen(
             [python_executable, str(daemon_script), "--config", str(self.config_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env=env,
         ) as process:
             # Give daemon time to start and setup file watching
             time.sleep(3)
@@ -359,11 +374,16 @@ class NextcloudSystemTests(unittest.TestCase):
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
         python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
         
+        # Set environment variable to enable stdout logging for tests
+        env = os.environ.copy()
+        env["NEXTCLOUD_DAEMON_LOG_STDOUT"] = "1"
+        
         with subprocess.Popen(
             [python_executable, str(daemon_script), "--config", str(self.config_file)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            env=env,
         ) as process:
             # Give daemon time to start and setup file watching
             time.sleep(3)
