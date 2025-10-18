@@ -1,0 +1,29 @@
+[Unit]
+Description=Nextcloud Upload Daemon
+Documentation=file:///opt/nextcloud_upload_daemon/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nextcloud-daemon
+Group=nextcloud-daemon
+WorkingDirectory=/opt/nextcloud_upload_daemon
+ExecStart=/opt/nextcloud_upload_daemon/run.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log /tmp
+
+# Environment
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

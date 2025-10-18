@@ -1,0 +1,19 @@
+{
+  "nextcloud_server": "https://your-nextcloud-server.com",
+  "username": "your-username",
+  "password": "your-app-password-or-password",
+  "directories": [
+    {
+      "local": "/home/user/documents/sync",
+      "remote": "/Documents/Sync"
+    },
+    {
+      "local": "/home/user/photos/upload",
+      "remote": "/Photos/Upload"
+    },
+    {
+      "local": "/var/www/backups",
+      "remote": "/Backups/Server"
+    }
+  ]
+}
