@@ -33,8 +33,9 @@ check_docker() {
         exit 1
     fi
 
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "Docker Compose is not installed or not in PATH"
+    if ! docker compose version &> /dev/null; then
+        print_error "Docker Compose plugin is not installed"
+        print_error "Please install Docker Compose V2: https://docs.docker.com/compose/install/"
         exit 1
     fi
 
@@ -46,10 +47,10 @@ start_nextcloud() {
     print_status "Starting Nextcloud test instance..."
     
     # Stop any existing containers
-    docker-compose -f docker-compose.test.yml down 2>/dev/null || true
+    docker compose -f docker-compose.test.yml down 2>/dev/null || true
     
     # Start services
-    docker-compose -f docker-compose.test.yml up -d
+    docker compose -f docker-compose.test.yml up -d
     
     # Wait for services to be healthy
     print_status "Waiting for Nextcloud to be ready (this may take a few minutes)..."
@@ -76,10 +77,10 @@ start_nextcloud() {
 # Stop Nextcloud test instance
 stop_nextcloud() {
     print_status "Stopping Nextcloud test instance..."
-    docker-compose -f docker-compose.test.yml down
+    docker compose -f docker-compose.test.yml down
     
     # Optionally remove volumes (uncomment if you want clean slate each time)
-    # docker-compose -f docker-compose.test.yml down -v
+    # docker compose -f docker-compose.test.yml down -v
 }
 
 # Run system tests

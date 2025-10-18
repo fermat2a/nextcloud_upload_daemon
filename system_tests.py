@@ -343,13 +343,13 @@ if __name__ == "__main__":
     if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
         print("Running in CI environment - assuming Nextcloud is already started")
     else:
-        print("Running locally - please ensure Nextcloud is running with: docker-compose -f docker-compose.test.yml up -d")
+        print("Running locally - please ensure Nextcloud is running with: docker compose -f docker-compose.test.yml up -d")
 
-        # Optionally auto-start docker-compose
+        # Optionally auto-start docker compose
         response = input("Start Nextcloud automatically? (y/n): ").lower()
         if response == "y":
             print("Starting Nextcloud...")
-            subprocess.run(["docker-compose", "-f", "docker-compose.test.yml", "up", "-d"])
+            subprocess.run(["docker", "compose", "-f", "docker-compose.test.yml", "up", "-d"])
             time.sleep(10)  # Give it time to start
 
     unittest.main(verbosity=2)
