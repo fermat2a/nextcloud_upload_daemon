@@ -224,6 +224,45 @@ Tests use extensive mocking to:
 - Control timing for deterministic test execution
 - Test error conditions safely
 
+### System Tests
+
+System tests provide end-to-end validation using a real Nextcloud instance:
+
+```bash
+# Run system tests (requires Docker)
+./run_system_tests.sh
+
+# Or run manually with existing Nextcloud
+python system_tests.py -v
+```
+
+**System Test Features:**
+- Real Nextcloud server integration using Docker
+- File upload and modification testing
+- Conflict resolution verification
+- Authentication and WebDAV protocol testing
+- Daemon lifecycle and error handling validation
+- Multi-file upload scenarios
+
+**System Test Requirements:**
+- Docker and Docker Compose installed
+- Available ports 8080 (Nextcloud) and 3306 (MySQL)
+- At least 2GB RAM for Docker containers
+- Internet connection for downloading Docker images
+
+**System Test Architecture:**
+- `docker-compose.test.yml`: Nextcloud + MySQL test environment
+- `system_tests.py`: Comprehensive integration test suite
+- `run_system_tests.sh`: Automated test runner with Docker orchestration
+
+The system tests create a complete Nextcloud environment and validate:
+- WebDAV connectivity and authentication
+- File upload operations
+- File modification and updates
+- Conflict resolution with duplicate filenames
+- Large file handling
+- Directory and folder management
+
 ## Code Quality Standards
 
 ### Code Style
@@ -391,19 +430,25 @@ The project uses GitHub Actions for automated testing and quality assurance. The
 
 **Test Matrix**:
 - **Operating Systems**: Ubuntu Latest, Windows Latest, macOS Latest
-- **Python Versions**: 3.7, 3.8, 3.9, 3.10, 3.11, 3.12
+- **Python Versions**: 3.8, 3.9, 3.10, 3.11, 3.12
 - **Coverage**: Automated coverage reporting via Codecov
+
+**Test Jobs**:
+- **Unit Tests**: Run on all OS/Python combinations
+- **System Tests**: Run with real Nextcloud instance on Ubuntu
+- **Code Quality**: Linting, formatting, and security checks
 
 **Quality Checks**:
 - **Linting**: flake8 for code style and syntax validation
 - **Formatting**: black for consistent code formatting
 - **Import Sorting**: isort for organized import statements
 - **Security**: bandit for security vulnerability detection
-- **Dependencies**: safety for known security issues in dependencies
 
 **Workflow Triggers**:
-- Push to `main` or `develop` branches
+- Push to `main` branch
 - Pull requests targeting `main` branch
+
+View the latest test results: [GitHub Actions](https://github.com/fermat2a/nextcloud_upload_daemon/actions)
 
 #### Local Testing Before Commits
 
