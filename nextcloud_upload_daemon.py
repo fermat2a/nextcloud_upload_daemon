@@ -77,14 +77,14 @@ class NextcloudUploader:
         """Ensure remote directory exists, create if it doesn't"""
         try:
             # Clean and normalize the path
-            clean_path = remote_path.strip('/')
+            clean_path = remote_path.strip("/")
             if not clean_path:
                 return  # Root directory always exists
-            
+
             # Check if directory exists
             dir_url = f"{self.webdav_url}/{clean_path}"
             response = requests.request("PROPFIND", dir_url, auth=self.auth, timeout=30)
-            
+
             if response.status_code == 207:
                 # Directory exists
                 logging.debug(f"Directory {remote_path} already exists")
@@ -93,14 +93,16 @@ class NextcloudUploader:
                 # Directory doesn't exist, create it
                 logging.info(f"Creating directory {remote_path}")
                 print(f"DEBUG: Creating directory {remote_path}")  # Console debug
-                
+
                 create_response = requests.request("MKCOL", dir_url, auth=self.auth, timeout=30)
                 if create_response.status_code in [200, 201]:
                     logging.info(f"Successfully created directory {remote_path}")
                     print(f"DEBUG: Successfully created directory {remote_path}")  # Console debug
                 else:
                     logging.error(f"Failed to create directory {remote_path}: HTTP {create_response.status_code}")
-                    print(f"DEBUG: Failed to create directory {remote_path}: HTTP {create_response.status_code}")  # Console debug
+                    print(
+                        f"DEBUG: Failed to create directory {remote_path}: HTTP {create_response.status_code}"
+                    )  # Console debug
             else:
                 logging.warning(f"Unexpected response when checking directory {remote_path}: HTTP {response.status_code}")
         except Exception as e:
@@ -121,7 +123,7 @@ class NextcloudUploader:
         try:
             # Ensure remote directory exists
             self._ensure_remote_directory(remote_path)
-            
+
             filename = os.path.basename(local_file_path)
             unique_filename = self._generate_unique_filename(remote_path, filename)
 
@@ -362,7 +364,8 @@ def load_config(config_path: str) -> Dict:
             if not isinstance(directory, dict) or "local" not in directory or "remote" not in directory:
                 logging.error(f"Invalid directory entry at index {i}: must contain 'local' and 'remote' fields")
                 print(
-                    f"Error: Invalid directory entry at index {i}: must contain 'local' and 'remote' fields", file=sys.stderr
+                    f"Error: Invalid directory entry at index {i}: must contain 'local' and 'remote' fields",
+                    file=sys.stderr,
                 )
                 sys.exit(1)
 

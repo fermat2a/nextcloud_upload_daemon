@@ -152,5 +152,6 @@ jobs:
     - name: Run system tests
       env:
         CI: true
+        NEXTCLOUD_DAEMON_LOG_STDOUT: 1
       run: |
         python system_tests.py -v

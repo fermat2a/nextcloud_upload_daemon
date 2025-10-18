@@ -144,7 +144,11 @@ class NextcloudSystemTests(unittest.TestCase):
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
 
         # Use Python from virtual environment if available
-        python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
+        python_executable = (
+            sys.executable
+            if hasattr(sys, "real_prefix") or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
+            else "python3"
+        )
 
         # Set environment variable to enable stdout logging for tests
         env = os.environ.copy()
@@ -184,12 +188,16 @@ class NextcloudSystemTests(unittest.TestCase):
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
 
         # Use Python from virtual environment if available
-        python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
-        
+        python_executable = (
+            sys.executable
+            if hasattr(sys, "real_prefix") or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
+            else "python3"
+        )
+
         # Set environment variable to enable stdout logging for tests
         env = os.environ.copy()
         env["NEXTCLOUD_DAEMON_LOG_STDOUT"] = "1"
-        
+
         with subprocess.Popen(
             [python_executable, str(daemon_script), "--config", str(self.config_file)],
             stdout=subprocess.PIPE,
@@ -268,15 +276,19 @@ class NextcloudSystemTests(unittest.TestCase):
         """Test that modified files are updated in Nextcloud"""
         original_content = "Original content"
         modified_content = "Modified content - updated!"
-        
+
         # Start daemon first
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
-        python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
-        
+        python_executable = (
+            sys.executable
+            if hasattr(sys, "real_prefix") or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
+            else "python3"
+        )
+
         # Set environment variable to enable stdout logging for tests
         env = os.environ.copy()
         env["NEXTCLOUD_DAEMON_LOG_STDOUT"] = "1"
-        
+
         with subprocess.Popen(
             [python_executable, str(daemon_script), "--config", str(self.config_file)],
             stdout=subprocess.PIPE,
@@ -294,8 +306,8 @@ class NextcloudSystemTests(unittest.TestCase):
 
             # Wait for initial upload but not deletion (shorter timeout)
             time.sleep(5)
-            
-            # Verify initial upload 
+
+            # Verify initial upload
             self.assertTrue(self._check_file_in_nextcloud("test_modify.txt"))
 
             # Modify the file while daemon is still running
@@ -332,24 +344,24 @@ class NextcloudSystemTests(unittest.TestCase):
         # Check upload happened
         self.assertTrue(self._check_file_in_nextcloud("test_delete.txt"), "File should be uploaded to Nextcloud")
 
-        # Check local deletion happened 
+        # Check local deletion happened
         file_path = self.test_upload_dir / "test_delete.txt"
         self.assertFalse(file_path.exists(), "File should be deleted locally after upload")
 
     def test_conflict_resolution(self):
         """Test filename conflict resolution"""
         content1 = "First file content"
-        
+
         # Create first file after daemon starts
         self._run_daemon_with_file_creation("common_name.txt", content1, timeout=12)
 
         # Verify upload
         self.assertTrue(self._check_file_in_nextcloud("common_name.txt"))
 
-        # Create another file with same name (after first is deleted) 
+        # Create another file with same name (after first is deleted)
         time.sleep(1)  # Ensure different timestamp
         content2 = "Second file content with different data"
-        
+
         # Create second file and run daemon again
         self._run_daemon_with_file_creation("common_name.txt", content2, timeout=12)
 
@@ -365,19 +377,23 @@ class NextcloudSystemTests(unittest.TestCase):
         """Test uploading multiple files simultaneously"""
         files_data = {
             "file1.txt": "Content of file 1",
-            "file2.txt": "Content of file 2", 
+            "file2.txt": "Content of file 2",
             "file3.txt": "Content of file 3",
             "subdoc.md": "# Markdown Document\nThis is a test.",
         }
 
         # Start daemon first, then create all files to trigger watchdog
         daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
-        python_executable = sys.executable if hasattr(sys, 'real_prefix') or (hasattr(sys, 'base_prefix') and sys.base_prefix != sys.prefix) else "python3"
-        
+        python_executable = (
+            sys.executable
+            if hasattr(sys, "real_prefix") or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
+            else "python3"
+        )
+
         # Set environment variable to enable stdout logging for tests
         env = os.environ.copy()
         env["NEXTCLOUD_DAEMON_LOG_STDOUT"] = "1"
-        
+
         with subprocess.Popen(
             [python_executable, str(daemon_script), "--config", str(self.config_file)],
             stdout=subprocess.PIPE,
