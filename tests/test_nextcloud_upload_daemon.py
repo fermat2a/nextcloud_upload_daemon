@@ -6,26 +6,20 @@ Tests the core functionality of the daemon including configuration loading,
 Nextcloud integration, file processing, and event handling.
 """
 
-import unittest
-import tempfile
-import os
 import json
-import time
-import threading
+import os
 import shutil
-from unittest.mock import Mock, patch, MagicMock, mock_open
 import sys
+import tempfile
+import threading
+import time
+import unittest
+from unittest.mock import MagicMock, Mock, mock_open, patch
 
 # Add the parent directory to the path to import the main module
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from nextcloud_upload_daemon import (
-    NextcloudUploader,
-    FileProcessor,
-    FileWatcher,
-    load_config,
-    setup_logging,
-)
+from nextcloud_upload_daemon import FileProcessor, FileWatcher, NextcloudUploader, load_config, setup_logging
 
 
 class TestNextcloudUploader(unittest.TestCase):

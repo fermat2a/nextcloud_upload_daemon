@@ -9,18 +9,19 @@ seconds of inactivity and deleted locally after 10 minutes of successful upload.
 
 import argparse
 import json
-import os
-import sys
-import time
-import threading
 import logging
 import logging.handlers
+import os
+import queue
+import sys
+import threading
+import time
 from typing import Dict, Optional
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+
 import requests
 from requests.auth import HTTPBasicAuth
-import queue
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 
 class NextcloudUploader:
