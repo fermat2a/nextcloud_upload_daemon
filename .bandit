@@ -1,0 +1,5 @@
+[bandit]
+exclude_dirs = tests,venv,.venv,build,dist
+skips = B101,B601
+# B101: Test for use of assert (common in tests)
+# B601: Shell injection via paramiko calls
