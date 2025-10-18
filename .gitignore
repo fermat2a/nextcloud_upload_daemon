@@ -18,5 +18,8 @@ Thumbs.db
 *.tmp
 *.temp
 
+# Configuration files (may contain sensitive data)
+config.json
+
 # Test files
 test_config.json
