@@ -381,6 +381,99 @@ For development testing, create a test configuration with:
 - Implement proper timeout handling
 - Consider rate limiting for upload operations
 
+## Continuous Integration and Deployment (CI/CD)
+
+### GitHub Actions Workflows
+
+The project uses GitHub Actions for automated testing and quality assurance. The CI/CD pipeline includes:
+
+#### Test Workflow (`.github/workflows/test.yml`)
+
+**Test Matrix**:
+- **Operating Systems**: Ubuntu Latest, Windows Latest, macOS Latest
+- **Python Versions**: 3.7, 3.8, 3.9, 3.10, 3.11, 3.12
+- **Coverage**: Automated coverage reporting via Codecov
+
+**Quality Checks**:
+- **Linting**: flake8 for code style and syntax validation
+- **Formatting**: black for consistent code formatting
+- **Import Sorting**: isort for organized import statements
+- **Security**: bandit for security vulnerability detection
+- **Dependencies**: safety for known security issues in dependencies
+
+**Workflow Triggers**:
+- Push to `main` or `develop` branches
+- Pull requests targeting `main` branch
+
+#### Local Testing Before Commits
+
+Before pushing changes, always run the complete test suite locally:
+
+```bash
+# Run all tests with coverage
+./test_runner.sh
+
+# Or run individual components
+python -m pytest tests/ -v
+python -m flake8 .
+python -m black --check .
+python -m isort --check-only .
+python -m bandit -r . -x tests/
+python -m safety check
+```
+
+#### Development Workflow
+
+1. **Feature Development**:
+   - Create feature branch from `develop`
+   - Write code with corresponding tests
+   - Run local tests to ensure they pass
+   - Commit changes with meaningful messages
+
+2. **Quality Assurance**:
+   - GitHub Actions automatically runs full test suite
+   - All tests must pass before merge approval
+   - Code coverage reports are generated automatically
+   - Security and style checks are enforced
+
+3. **Merge Process**:
+   - Pull request must pass all CI checks
+   - Code review by maintainers
+   - Merge to `develop` for integration testing
+   - Release to `main` for production deployment
+
+#### CI/CD Configuration
+
+**Required Dependencies** (automatically installed in CI):
+```
+pytest>=7.0.0       # Test framework
+pytest-cov>=4.0.0   # Coverage plugin
+coverage>=7.0.0     # Coverage measurement
+flake8>=6.0.0       # Code linting
+black>=23.0.0       # Code formatting
+isort>=5.12.0       # Import sorting
+bandit>=1.7.0       # Security analysis
+safety>=2.3.0       # Dependency security check
+```
+
+**Environment Variables** (for local development):
+- `CODECOV_TOKEN`: For coverage reporting (optional)
+- `GITHUB_TOKEN`: Automatically provided by GitHub Actions
+
+#### Troubleshooting CI Issues
+
+**Common CI Failures**:
+1. **Test Failures**: Check test output in GitHub Actions logs
+2. **Linting Errors**: Run `flake8 .` locally to identify issues
+3. **Formatting Issues**: Run `black .` to auto-format code
+4. **Import Order**: Run `isort .` to fix import sorting
+5. **Security Issues**: Review bandit output for security concerns
+
+**Performance Monitoring**:
+- CI run times are monitored across different OS/Python combinations
+- Coverage trends are tracked over time
+- Security vulnerability reports are generated automatically
+
 ---
 
 *This documentation is maintained as part of the Nextcloud Upload Daemon project. For questions or suggestions, please open an issue on the project repository.*

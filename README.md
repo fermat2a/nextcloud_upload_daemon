@@ -1,5 +1,10 @@
 # Nextcloud Upload Daemon
 
+[![Tests](https://github.com/USERNAME/nextcloud_upload_daemon/workflows/Tests/badge.svg)](https://github.com/USERNAME/nextcloud_upload_daemon/actions)
+[![codecov](https://codecov.io/gh/USERNAME/nextcloud_upload_daemon/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/nextcloud_upload_daemon)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+
 > **⚠️ IMPORTANT NOTICE ⚠️**
 > 
 > **This program was created using GitHub Copilot with Visual Studio Code assistance. This project serves as an evaluation of GitHub Copilot's capabilities. Therefore, I am attempting to make no manual interventions in this project - all file processing, including documentation and git commit messages, is handled by GitHub Copilot. A commit is created for each prompt, which also contains the prompt itself.**
