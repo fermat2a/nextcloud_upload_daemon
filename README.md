@@ -320,3 +320,15 @@ The author disclaims all liability for any damages, data loss, or other conseque
 **Important**: Users should be aware that the copyright status of AI-generated code may be subject to legal uncertainty. If copyright ownership is a concern for your use case, you should seek appropriate legal advice.
 
 This project is open source under the GPL v2 license, subject to the copyright considerations mentioned above.
+
+## Developer Documentation
+
+For developers who want to contribute to this project, modify the code, or understand the internal architecture, please refer to the comprehensive [Developer Documentation](DEVELOPER.md).
+
+The developer documentation covers:
+- Code architecture and component design
+- Development environment setup
+- Unit testing procedures and test runner usage
+- Code quality standards and contribution guidelines
+- Debugging and troubleshooting guides
+- Security considerations for development
