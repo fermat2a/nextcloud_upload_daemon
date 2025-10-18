@@ -1,5 +1,9 @@
 # Nextcloud Upload Daemon
 
+> **⚠️ IMPORTANT NOTICE ⚠️**
+> 
+> **This program was created using GitHub Copilot with Visual Studio Code assistance. This project serves as an evaluation of GitHub Copilot's capabilities. Therefore, I am attempting to make no manual interventions in this project - all file processing, including documentation and git commit messages, is handled by GitHub Copilot. A commit is created for each prompt, which also contains the prompt itself.**
+
 A Python daemon that monitors local directories for file changes and automatically uploads modified files to a Nextcloud server. Files are uploaded after 10 seconds of inactivity and automatically deleted from the local system after 10 minutes of successful upload.
 
 ## What the Program Does
