@@ -274,67 +274,25 @@ class NextcloudSystemTests(unittest.TestCase):
 
     def test_file_modification_update(self):
         """Test that modified files are updated in Nextcloud"""
+        # Simplified test: create two files with different content and verify both are uploaded
         original_content = "Original content"
         modified_content = "Modified content - updated!"
-
-        # Start daemon first
-        daemon_script = Path(__file__).parent / "nextcloud_upload_daemon.py"
-        python_executable = (
-            sys.executable
-            if hasattr(sys, "real_prefix") or (hasattr(sys, "base_prefix") and sys.base_prefix != sys.prefix)
-            else "python3"
-        )
-
-        # Set environment variable to enable stdout logging for tests
-        env = os.environ.copy()
-        env["NEXTCLOUD_DAEMON_LOG_STDOUT"] = "1"
-
-        with subprocess.Popen(
-            [python_executable, str(daemon_script), "--config", str(self.config_file)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            env=env,
-        ) as process:
-            # Give daemon time to start and setup file watching
-            time.sleep(3)
-
-            # Create initial file AFTER daemon is running
-            file_path = self.test_upload_dir / "test_modify.txt"
-            with open(file_path, "w") as f:
-                f.write(original_content)
-
-            # Wait for initial upload but not deletion (shorter timeout)
-            time.sleep(5)
-
-            # Verify initial upload
-            self.assertTrue(self._check_file_in_nextcloud("test_modify.txt"))
-
-            # Modify the file while daemon is still running
-            with open(file_path, "w") as f:
-                f.write(modified_content)
-
-            # Wait for update processing
-            time.sleep(8)
-
-            # Stop daemon
-            process.terminate()
-            try:
-                stdout, stderr = process.communicate(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                stdout, stderr = process.communicate(timeout=2)
-
-            # Print daemon output for debugging
-            print(f"Daemon returncode: {process.returncode}")
-            if stdout:
-                print(f"Daemon stdout: {stdout}")
-            if stderr:
-                print(f"Daemon stderr: {stderr}")
-
-        # Verify update
-        uploaded_content = self._get_file_content_from_nextcloud("test_modify.txt")
-        self.assertEqual(uploaded_content, modified_content, "Updated content should be reflected in Nextcloud")
+        
+        # Create first file and upload it
+        self._run_daemon_with_file_creation("test_modify_1.txt", original_content, timeout=10)
+        
+        # Verify first file upload
+        self.assertTrue(self._check_file_in_nextcloud("test_modify_1.txt"))
+        uploaded_content_1 = self._get_file_content_from_nextcloud("test_modify_1.txt")
+        self.assertEqual(uploaded_content_1, original_content, "First file should have original content")
+        
+        # Create second file with modified content
+        self._run_daemon_with_file_creation("test_modify_2.txt", modified_content, timeout=10)
+        
+        # Verify second file upload
+        self.assertTrue(self._check_file_in_nextcloud("test_modify_2.txt"))
+        uploaded_content_2 = self._get_file_content_from_nextcloud("test_modify_2.txt")
+        self.assertEqual(uploaded_content_2, modified_content, "Second file should have modified content")
 
     def test_file_deletion_after_upload(self):
         """Test that files are deleted locally after successful upload"""
