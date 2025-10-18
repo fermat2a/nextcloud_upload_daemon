@@ -20,12 +20,6 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Check if pip is installed
-if ! python3 -m pip --version &> /dev/null; then
-    echo "Error: pip is not installed. Please install pip first."
-    exit 1
-fi
-
 # Create virtual environment if it doesn't exist
 if [ ! -d "$VENV_DIR" ]; then
     echo "Creating Python virtual environment..."
@@ -36,6 +30,12 @@ fi
 
 # Activate virtual environment
 source "$VENV_DIR/bin/activate"
+
+# Check if pip is available in the virtual environment
+if ! pip --version &> /dev/null; then
+    echo "Error: pip is not available in the virtual environment."
+    exit 1
+fi
 
 # Upgrade pip
 echo "Upgrading pip..."
