@@ -1,7 +1,7 @@
 # Nextcloud Upload Daemon
 
-[![Tests](https://github.com/USERNAME/nextcloud_upload_daemon/workflows/Tests/badge.svg)](https://github.com/USERNAME/nextcloud_upload_daemon/actions)
-[![codecov](https://codecov.io/gh/USERNAME/nextcloud_upload_daemon/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/nextcloud_upload_daemon)
+[![Tests](https://github.com/fermat2a/nextcloud_upload_daemon/workflows/Tests/badge.svg)](https://github.com/fermat2a/nextcloud_upload_daemon/actions)
+[![codecov](https://codecov.io/gh/fermat2a/nextcloud_upload_daemon/branch/main/graph/badge.svg)](https://codecov.io/gh/fermat2a/nextcloud_upload_daemon)
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 
